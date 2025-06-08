@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green's Green Retreat - An Interactive Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: A single-page "discovery journey" structure is used to create a fluid, narrative experience. The flow starts with a broad introduction (Hero/Experience), narrows to specifics (interactive Accommodations), expands to activities (Activities), and concludes with practical details (Plan Your Stay). This user-centric flow guides a potential guest through the decision-making process logically, from inspiration to action. The interactive accommodation selector is the core, allowing easy comparison without page loads, which is a major usability win over a static, multi-page site. -->
+    <!-- Visualization & Content Choices: Report Info: Accommodation Capacities -> Goal: Compare -> Viz: Interactive Bar Chart (Chart.js) -> Interaction: Highlights bar of selected cottage -> Justification: Provides instant, clear visual comparison of cottage sizes, directly linked to user's choice. Report Info: Core Themes (Tranquility, Heritage) -> Goal: Inform -> Viz: Icon-based cards (HTML/Tailwind) -> Interaction: Static -> Justification: Quickly communicates the retreat's key value propositions. Report Info: Accommodation Details -> Goal: Organize/Inform -> Viz: Master-Detail view (JS updates) -> Interaction: Click card to update detail pane -> Justification: Superior for comparing options without losing context. Report Info: Activities -> Goal: Organize -> Viz: Icon + Text lists (HTML/Tailwind) -> Interaction: Static -> Justification: Highly scannable and easy to digest. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            background-color: #FAF8F5;
+            color: #4E443C;
+            font-family: 'Roboto', sans-serif;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .active-nav {
+            color: #8A9A5B;
+            font-weight: bold;
+        }
+        .active-cottage {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(138, 154, 91, 0.3), 0 4px 6px -2px rgba(138, 154, 91, 0.15);
+            border-color: #8A9A5B;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 320px;
+            width: 100%;
+            max-width: 600px;
+        }
+        #home-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -100;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="home" class="relative h-screen w-full flex items-center justify-center text-center text-white overflow-hidden">
+        <video autoplay muted loop playsinline id="home-video">
+            <!-- 
+              Multiple source tags are provided for maximum browser compatibility.
+              The browser will use the first format it supports. WebM is often preferred 
+              for its modern compression, with MP4 as a universal fallback.
+            -->
+            <source src="https://res.cloudinary.com/dx6zxdlts/video/upload/v1749282824/I_promise_it_s_an_amazing_get_away_1_hm7emn.webm" type="video/webm">
+            <source src="https://res.cloudinary.com/dx6zxdlts/video/upload/v1749282824/I_promise_it_s_an_amazing_get_away_1_hm7emn.mp4" type="video/mp4">
+            <source src="https://res.cloudinary.com/dx6zxdlts/video/upload/v1749282824/I_promise_it_s_an_amazing_get_away_1_hm7emn.ogv" type="video/ogg">
+            Your browser does not support the video tag.
+        </video>
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative z-10 p-4">
+            <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold font-display drop-shadow-lg">Green's Green Retreat</h1>
+            <p class="mt-4 text-xl md:text-2xl max-w-2xl mx-auto font-light">Your serene countryside sanctuary in the heart of Tigoni's tea lands.</p>
+            <a href="#experience" class="mt-8 inline-block bg-[#8A9A5B] text-white py-3 px-8 rounded-full text-lg font-semibold uppercase tracking-wider hover:bg-opacity-90 transition-transform transform hover:scale-105">Begin Your Escape</a>
+        </div>
+    </header>
+
+    <nav class="sticky top-0 z-50 bg-[#FAF8F5]/80 backdrop-blur-md shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#home" class="text-2xl font-display font-bold text-[#8A9A5B]">GGR</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-[#8A9A5B] transition">Home</a>
+                        <a href="#experience" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-[#8A9A5B] transition">The Experience</a>
+                        <a href="#accommodations" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-[#8A9A5B] transition">Accommodations</a>
+                        <a href="#activities" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-[#8A9A5B] transition">Activities</a>
+                        <a href="#booking" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-[#8A9A5B] transition">Plan Your Stay</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button id="mobile-menu-button" type="button" class="bg-white/20 inline-flex items-center justify-center p-2 rounded-md text-[#4E443C] hover:text-[#8A9A5B] hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 text-center">
+                <a href="#home" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:text-[#8A9A5B] hover:bg-white/50 transition">Home</a>
+                <a href="#experience" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:text-[#8A9A5B] hover:bg-white/50 transition">The Experience</a>
+                <a href="#accommodations" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:text-[#8A9A5B] hover:bg-white/50 transition">Accommodations</a>
+                <a href="#activities" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:text-[#8A9A5B] hover:bg-white/50 transition">Activities</a>
+                <a href="#booking" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:text-[#8A9A5B] hover:bg-white/50 transition">Plan Your Stay</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section id="experience" class="py-20 lg:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-4xl lg:text-5xl font-extrabold font-display text-[#4E443C]">A Truly Unique Countryside Experience</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">Discover the essence of Green's Green Retreat. This section introduces the core principles that make a stay here so special, from its deep-rooted history to its promise of peace, all just a short drive from the city.</p>
+                </div>
+                <div class="mt-16 grid gap-10 md:grid-cols-3">
+                    <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                        <div class="text-5xl text-[#8A9A5B]">🌿</div>
+                        <h3 class="mt-4 text-2xl font-bold font-display">Tranquility & Nature</h3>
+                        <p class="mt-2 text-gray-600">Escape to a "nature lover's paradise." We are founded on the promise of peace, privacy, and a deep connection with the stunning backdrop of lush, endless tea fields.</p>
+                    </div>
+                    <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                         <div class="text-5xl text-[#8A9A5B]">📜</div>
+                        <h3 class="mt-4 text-2xl font-bold font-display">Agricultural Heritage</h3>
+                        <p class="mt-2 text-gray-600">Situated on Coomete Farm, our family-owned retreat is steeped in over 76 years of history. This legacy provides an authentic sense of place and a genuine connection to the land.</p>
+                    </div>
+                    <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                         <div class="text-5xl text-[#8A9A5B]">🚗</div>
+                        <h3 class="mt-4 text-2xl font-bold font-display">Convenient Escape</h3>
+                        <p class="mt-2 text-gray-600">Located just a 30-45 minute drive from Nairobi, our "hidden gem" offers a swift transition from urban bustle to countryside serenity, making it the ideal weekend getaway.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="accommodations" class="py-20 lg:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-4xl lg:text-5xl font-extrabold font-display text-[#4E443C]">Find Your Private Haven</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">Explore our diverse collection of unique cottages. Each offers a different way to experience the tranquility of Tigoni. Click on an option to see details and discover which haven is perfect for you.</p>
+                </div>
+
+                <div class="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="cottage-card p-6 border-2 border-transparent rounded-lg cursor-pointer bg-gray-50 hover:bg-white transition duration-300 shadow-md" data-id="olivia">
+                            <h3 class="text-xl font-bold font-display flex items-center">🏡 Olivia Cottage</h3>
+                            <p class="text-gray-600 mt-1">Spacious stay for up to 8 guests.</p>
+                        </div>
+                         <div class="cottage-card p-6 border-2 border-transparent rounded-lg cursor-pointer bg-gray-50 hover:bg-white transition duration-300 shadow-md" data-id="double_alma">
+                            <h3 class="text-xl font-bold font-display flex items-center">🏡 Double Alma Cottage</h3>
+                            <p class="text-gray-600 mt-1">Ample room for up to 8 guests.</p>
+                        </div>
+                        <div class="cottage-card p-6 border-2 border-transparent rounded-lg cursor-pointer bg-gray-50 hover:bg-white transition duration-300 shadow-md" data-id="alma1">
+                            <h3 class="text-xl font-bold font-display flex items-center">🏡 Alma 1 Cottage</h3>
+                            <p class="text-gray-600 mt-1">A cozy hideaway for 2 guests.</p>
+                        </div>
+                        <div class="cottage-card p-6 border-2 border-transparent rounded-lg cursor-pointer bg-gray-50 hover:bg-white transition duration-300 shadow-md" data-id="alma2">
+                            <h3 class="text-xl font-bold font-display flex items-center">🌳 Alma 2 (The Treehouse)</h3>
+                            <p class="text-gray-600 mt-1">Unique treetop stay for 8 guests.</p>
+                        </div>
+                        <div class="cottage-card p-6 border-2 border-transparent rounded-lg cursor-pointer bg-gray-50 hover:bg-white transition duration-300 shadow-md" data-id="teapod">
+                            <h3 class="text-xl font-bold font-display flex items-center">🍵 Tea Pod / Siri</h3>
+                            <p class="text-gray-600 mt-1">Modern, stylish unit for 1-2 guests.</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 p-8 rounded-xl bg-gray-50 shadow-inner sticky top-24">
+                        <div id="cottage-details">
+                            <h3 id="details-title" class="text-3xl font-bold font-display text-[#8A9A5B]">Select a Cottage</h3>
+                            <p id="details-description" class="mt-4 text-gray-700 text-lg">Click on any of the accommodation options to the left to see more details here, including a description, who it's ideal for, and a visual comparison of capacity.</p>
+                            <p id="details-ideal" class="mt-4 font-semibold text-gray-800"></p>
+                        </div>
+                        <div class="mt-8">
+                            <h4 class="text-center text-xl font-display font-semibold mb-4">Accommodation Capacity Comparison</h4>
+                            <div class="chart-container">
+                                <canvas id="capacityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="activities" class="py-20 lg:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-4xl lg:text-5xl font-extrabold font-display text-[#4E443C]">Adventure & Serenity</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">Whether you seek gentle relaxation or light adventure, the retreat and the surrounding Tigoni area offer a wealth of experiences. This section highlights the activities available for you to enjoy during your stay.</p>
+                </div>
+
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold font-display text-center text-[#8A9A5B]">On-Site at the Retreat</h3>
+                        <ul class="mt-6 space-y-4 text-lg">
+                            <li class="flex items-start"><span class="text-2xl mr-3">💧</span><div><strong>Water Slides:</strong> Fun for the whole family.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🛶</span><div><strong>Boat Rides:</strong> Enjoy a peaceful paddle on the water.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🎣</span><div><strong>Fishing:</strong> Cast a line and relax by the water's edge.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🏕️</span><div><strong>Camping:</strong> For a closer immersion in nature.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🐦</span><div><strong>Bird Watching:</strong> Discover the local avian wildlife.</div></li>
+                        </ul>
+                    </div>
+                     <div class="bg-white p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold font-display text-center text-[#8A9A5B]">Exploring the Tigoni Region</h3>
+                         <ul class="mt-6 space-y-4 text-lg">
+                            <li class="flex items-start"><span class="text-2xl mr-3">🥾</span><div><strong>Scenic Hikes:</strong> Trails through lush tea plantations and forests.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🏞️</span><div><strong>Waterfall Discovery:</strong> The region is known for its beautiful waterfalls.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🧺</span><div><strong>Picnics:</strong> Enjoy a meal amidst manicured gardens or tea fields.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🚲</span><div><strong>E-Bike Tours:</strong> A fun way to explore the vast tea estates.</div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-3">🎨</span><div><strong>Local Art & Culture:</strong> Visit nearby galleries and cultural spots.</div></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="booking" class="py-20 lg:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-4xl lg:text-5xl font-extrabold font-display text-[#4E443C]">Plan Your Unforgettable Stay</h2>
+                     <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">Ready to experience the magic of Green's Green Retreat? Here you'll find all the practical information needed to book your visit, from pricing and contact details to perspectives from fellow travelers.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
+                    <div class="bg-gray-50 p-8 rounded-xl shadow-md">
+                        <h3 class="text-2xl font-bold font-display text-[#8A9A5B]">Rates & Pricing</h3>
+                        <p class="mt-4 text-4xl font-bold text-gray-800">Ksh 18,500</p>
+                        <p class="mt-2 text-gray-600">Starting rate for 2 people. Prices vary depending on the chosen accommodation and season.</p>
+                    </div>
+                     <div class="bg-gray-50 p-8 rounded-xl shadow-md">
+                        <h3 class="text-2xl font-bold font-display text-[#8A9A5B]">Direct Bookings</h3>
+                        <p class="mt-4 text-gray-600">We offer a personalized booking experience. Please contact us directly:</p>
+                        <div class="mt-4 space-y-3">
+                            <a href="tel:+254714281791" class="font-semibold text-lg hover:text-[#8A9A5B] transition block">📞 +254 714 281 791</a>
+                            <a href="https://www.instagram.com/greens_green_retreat" target="_blank" class="font-semibold text-lg hover:text-[#8A9A5B] transition block">@greens_green_retreat</a>
+                        </div>
+                    </div>
+                     <div class="bg-gray-50 p-8 rounded-xl shadow-md">
+                        <h3 class="text-2xl font-bold font-display text-[#8A9A5B]">Guest Perspectives</h3>
+                        <p class="mt-4 text-gray-600 italic">"A true hidden gem! The perfect escape from the city. Waking up to birdsong and the views of the tea fields is unforgettable."</p>
+                        <p class="mt-2 font-semibold">- Social Media Buzz</p>
+                    </div>
+                </div>
+                 <div class="mt-16 bg-white p-8 md:p-12 rounded-xl shadow-xl border border-gray-100">
+                    <h3 class="text-3xl font-bold font-display text-center text-[#4E443C]">The Travel Writer's Verdict</h3>
+                    <p class="mt-4 text-center text-gray-600 max-w-4xl mx-auto">Green's Green Retreat is a highly recommended destination for those seeking an authentic, charming, and restorative break. It excels at blending its rich agricultural heritage with modern comfort and a deep respect for nature.</p>
+                    <ul class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 list-none max-w-4xl mx-auto">
+                        <li class="flex"><span class="text-[#8A9A5B] mr-3 font-bold">✔</span><span><strong>Ideal For:</strong> Couples, families, groups, and solo travelers seeking peace.</span></li>
+                        <li class="flex"><span class="text-[#8A9A5B] mr-3 font-bold">✔</span><span><strong>Key Strengths:</strong> Diverse & unique accommodations, stunning scenery, convenient location.</span></li>
+                        <li class="flex"><span class="text-[#8A9A5B] mr-3 font-bold">✔</span><span><strong>Experience:</strong> A perfect balance of relaxation and light, family-friendly activities.</span></li>
+                        <li class="flex"><span class="text-[#8A9A5B] mr-3 font-bold">✔</span><span><strong>Booking Tip:</strong> Contact them directly to clarify amenities for your chosen cottage and dining options.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="bg-[#4E443C] text-white py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 Green's Green Retreat Interactive Guide. All information synthesized from public sources for illustrative purposes.</p>
+        </div>
+    </footer>
+
+    <script>
+        const accommodationData = {
+            olivia: {
+                name: "🏡 Olivia Cottage",
+                description: "This spacious cottage is an ideal choice for larger families or groups of friends seeking a shared countryside experience in a comfortable and welcoming setting.",
+                ideal: "Ideal for larger families and groups of friends.",
+                capacity: 8
+            },
+            double_alma: {
+                name: "🏡 Double Alma Cottage",
+                description: "Similar to the Olivia Cottage, this option provides ample space for groups or large families. Its name may suggest a duplex style or interconnected layout.",
+                ideal: "Ideal for groups and large families.",
+                capacity: 8
+            },
+            alma1: {
+                name: "🏡 Alma 1 Cottage",
+                description: "A cozy hideaway for two, Alma 1 is distinguished by its location, perched in the valley with stunning, uninterrupted views of the beautiful landscape.",
+                ideal: "Ideal for couples, solo travelers, and romantic getaways.",
+                capacity: 2
+            },
+            alma2: {
+                name: "🌳 Alma 2 (The Treehouse)",
+                description: "Offering a truly unique treetop stay, this distinctive accommodation is tailored for adventurous families or groups seeking a novel and memorable lodging experience.",
+                ideal: "Ideal for adventurous families and groups seeking a unique experience.",
+                capacity: 8
+            },
+            teapod: {
+                name: "🍵 Tea Pod / Siri",
+                description: "A modern, compact, and stylish unit with a kitchen and an airy, open design. Perfect for those seeking contemporary comfort amidst nature.",
+                ideal: "Ideal for individuals, couples, and modern comfort seekers.",
+                capacity: 2
+            }
+        };
+
+        const cottageCards = document.querySelectorAll('.cottage-card');
+        const detailsTitle = document.getElementById('details-title');
+        const detailsDescription = document.getElementById('details-description');
+        const detailsIdeal = document.getElementById('details-ideal');
+        let capacityChart;
+
+        function updateDetails(id) {
+            const data = accommodationData[id];
+            detailsTitle.textContent = data.name;
+            detailsDescription.textContent = data.description;
+            detailsIdeal.textContent = data.ideal;
+
+            cottageCards.forEach(card => {
+                card.classList.remove('active-cottage');
+                if (card.dataset.id === id) {
+                    card.classList.add('active-cottage');
+                }
+            });
+            
+            updateChartHighlight(id);
+        }
+        
+        function updateChartHighlight(selectedId) {
+            if (!capacityChart) return;
+            
+            const backgroundColors = capacityChart.data.labels.map(label => {
+                const cottageId = Object.keys(accommodationData).find(key => accommodationData[key].name.includes(label.replace(/ \(\w+\)/, '')));
+                return cottageId === selectedId ? '#8A9A5B' : 'rgba(138, 154, 91, 0.2)';
+            });
+             const borderColors = capacityChart.data.labels.map(label => {
+                const cottageId = Object.keys(accommodationData).find(key => accommodationData[key].name.includes(label.replace(/ \(\w+\)/, '')));
+                return cottageId === selectedId ? '#4E443C' : 'rgba(138, 154, 91, 0.2)';
+            });
+
+            capacityChart.data.datasets[0].backgroundColor = backgroundColors;
+            capacityChart.data.datasets[0].borderColor = borderColors;
+            capacityChart.update();
+        }
+
+
+        cottageCards.forEach(card => {
+            card.addEventListener('click', () => {
+                updateDetails(card.dataset.id);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('capacityChart').getContext('2d');
+            const chartData = {
+                labels: Object.values(accommodationData).map(c => c.name.replace(' Cottage', '').replace(' (The Treehouse)', '🌳').replace(' / Siri', '🍵').replace('🏡 ', '')),
+                datasets: [{
+                    label: 'Max Guests',
+                    data: Object.values(accommodationData).map(c => c.capacity),
+                    backgroundColor: 'rgba(138, 154, 91, 0.2)',
+                    borderColor: 'rgba(138, 154, 91, 0.2)',
+                    borderWidth: 2,
+                    borderRadius: 5,
+                    barPercentage: 0.6,
+                }]
+            };
+            
+            capacityChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            },
+                             ticks: {
+                                font: {
+                                    family: "'Roboto', sans-serif"
+                                }
+                            }
+                        },
+                        y: {
+                           grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Roboto', sans-serif",
+                                    size: 14,
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                             callbacks: {
+                                label: function(context) {
+                                    return ` Max ${context.raw} guests`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            updateDetails('alma1');
+        });
+        
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+            mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.classList.toggle('hidden');
+            mobileMenuButton.querySelector('svg:not(.hidden)').classList.add('hidden');
+            mobileMenuButton.querySelector(isExpanded ? 'svg.block' : 'svg.hidden').classList.remove('hidden');
+        });
+        
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (!mobileMenu.classList.contains('hidden')) {
+                     mobileMenuButton.click();
+                }
+            })
+        })
+
+        const sections = document.querySelectorAll('section, header');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active-nav');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active-nav');
+                }
+            });
+        });
+
+    </script>
+    <script type="text/javascript">
+  (function(d, t) {
+      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      v.onload = function() {
+        window.voiceflow.chat.load({
+          verify: { projectID: '6843ff0401606e704f0e07a2' },
+          url: 'https://general-runtime.voiceflow.com',
+          versionID: 'production',
+          voice: {
+            url: "https://runtime-api.voiceflow.com"
+          }
+        });
+      }
+      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+  })(document, 'script');
+</script>
+</body>
+</html>
